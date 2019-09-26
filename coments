@@ -1,0 +1,48 @@
+// {logger.Debug("Invoke executed for log")
+	// //Payload := []byte("This is the payload. ")
+	// fmt.Println("transaction id", stub.GetTxID())
+	// t, _ := stub.GetTxTimestamp()
+	// TxTimestamp := time.Unix(t.GetSeconds(), 0)
+	// fmt.Println("transaction time stamp", TxTimestamp)
+	// fmt.Println("the channel id is", stub.GetChannelID())
+
+	// argsArray := stub.GetArgs()
+	// fmt.Println("get args byte array output")
+	// for ndx, arg := range argsArray {
+	// 	argStr := string(arg)
+	// 	fmt.Printf("[%d] = %s", ndx, argStr)
+	// }
+
+	// fmt.Println(" the output of the get args function")
+	// fmt.Println(stub.GetStringArgs())
+
+	// fmt.Println("output of functions and parameters")
+	// funcName, args := stub.GetFunctionAndParameters()
+	// fmt.Printf("function name = %s \n Args = %s \n", funcName, args)
+
+	// fmt.Println("getting arguments of slice")
+	// argsSlice, _ := stub.GetArgsSlice()
+	// length := len(argsSlice)
+	// fmt.Println(length, argsSlice)
+	// return shim.Success(nil) //utility function for generating the response
+  
+
+  functions usage in if statement of the invoke function
+
+  //else if function == "transferMarble" { //change owner of a specific marble
+	// 	return fashion.transferMarble(stub, args)
+	// } else if function == "transferMarblesBasedOnColor" { //transfer all marbles of a certain color
+	// 	return t.transferMarblesBasedOnColor(stub, args)
+	// } else if function == "delete" { //delete a marble
+	// 	return t.delete(stub, args)
+	// } else if function == "readMarble" { //read a marble
+	// 	return t.readMarble(stub, args)
+	// } else if function == "queryMarblesByOwner" { //find marbles for owner X using rich query
+	// 	return t.queryMarblesByOwner(stub, args)
+	// } else if function == "queryMarbles" { //find marbles based on an ad hoc rich query
+	// 	return t.queryMarbles(stub, args)
+	// } else if function == "getHistoryForMarble" { //get history of values for a marble
+	// 	return t.getHistoryForMarble(stub, args)
+	// } else if function == "getMarblesByRange" { //get marbles based on range query
+	// 	return t.getMarblesByRange(stub, args)
+	// }

@@ -37,33 +37,7 @@ func (fashion *fashionChaincode) Init(stub shim.ChaincodeStubInterface) peer.Res
 func (fashion *fashionChaincode) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 
 	fmt.Println("invoke executed")
-	// {logger.Debug("Invoke executed for log")
-	// //Payload := []byte("This is the payload. ")
-	// fmt.Println("transaction id", stub.GetTxID())
-	// t, _ := stub.GetTxTimestamp()
-	// TxTimestamp := time.Unix(t.GetSeconds(), 0)
-	// fmt.Println("transaction time stamp", TxTimestamp)
-	// fmt.Println("the channel id is", stub.GetChannelID())
-
-	// argsArray := stub.GetArgs()
-	// fmt.Println("get args byte array output")
-	// for ndx, arg := range argsArray {
-	// 	argStr := string(arg)
-	// 	fmt.Printf("[%d] = %s", ndx, argStr)
-	// }
-
-	// fmt.Println(" the output of the get args function")
-	// fmt.Println(stub.GetStringArgs())
-
-	// fmt.Println("output of functions and parameters")
-	// funcName, args := stub.GetFunctionAndParameters()
-	// fmt.Printf("function name = %s \n Args = %s \n", funcName, args)
-
-	// fmt.Println("getting arguments of slice")
-	// argsSlice, _ := stub.GetArgsSlice()
-	// length := len(argsSlice)
-	// fmt.Println(length, argsSlice)
-	// return shim.Success(nil) //utility function for generating the response
+	stub.PutState("token", []byte("2000"))
 
 	//instance of the response structure which is similar to http response
 	//return peer.Response{Status:401, Message: "Unauthorized", Payload: payload}
@@ -74,23 +48,9 @@ func (fashion *fashionChaincode) Invoke(stub shim.ChaincodeStubInterface) peer.R
 	// Handle different functions
 	if function == "initcloth" { //create a new clothing asset
 		return fashion.initcloth(stub, args)
-	} //else if function == "transferMarble" { //change owner of a specific marble
-	// 	return fashion.transferMarble(stub, args)
-	// } else if function == "transferMarblesBasedOnColor" { //transfer all marbles of a certain color
-	// 	return t.transferMarblesBasedOnColor(stub, args)
-	// } else if function == "delete" { //delete a marble
-	// 	return t.delete(stub, args)
-	// } else if function == "readMarble" { //read a marble
-	// 	return t.readMarble(stub, args)
-	// } else if function == "queryMarblesByOwner" { //find marbles for owner X using rich query
-	// 	return t.queryMarblesByOwner(stub, args)
-	// } else if function == "queryMarbles" { //find marbles based on an ad hoc rich query
-	// 	return t.queryMarbles(stub, args)
-	// } else if function == "getHistoryForMarble" { //get history of values for a marble
-	// 	return t.getHistoryForMarble(stub, args)
-	// } else if function == "getMarblesByRange" { //get marbles based on range query
-	// 	return t.getMarblesByRange(stub, args)
-	// }
+	} else if function == "get" {
+		return get(stub)
+	}
 
 	fmt.Println("invoke did not find func: " + function) //error
 	return shim.Error("Received unknown function invocation")
@@ -105,6 +65,22 @@ func (fashion *fashionChaincode) initcloth(stub shim.ChaincodeStubInterface, arg
 
 	//   0       1       2     3
 	// "shirt", "blue", "40", "bob"
+
+	//testing get and set functions for state data
+	valuet, err := stub.GetState("token")
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	intval, err := strconv.Atoi(string(valuet))
+	if err != nil {
+		return shim.Success([]byte("false"))
+	}
+	intval += 10
+
+	stub.PutState("token", []byte(strconv.Itoa(intval)))
+
+	//testing ends here
+
 	if len(args) != 4 {
 		return shim.Error("Incorrect number of arguments. Expecting 4")
 	}
@@ -131,7 +107,7 @@ func (fashion *fashionChaincode) initcloth(stub shim.ChaincodeStubInterface, arg
 		return shim.Error("3rd argument must be a numeric string")
 	}
 
-	// ==== Check if marble already exists ====
+	// ==== Check if asset already exists ====
 	clothAsBytes, err := stub.GetState(clothName)
 	if err != nil {
 		return shim.Error("Failed to get cloths: " + err.Error())
@@ -148,16 +124,16 @@ func (fashion *fashionChaincode) initcloth(stub shim.ChaincodeStubInterface, arg
 		return shim.Error(err.Error())
 	}
 	//Alternatively, build the cloth json string manually if you don't want to use struct marshalling
-	//marbleJSONasString := `{"docType":"Marble",  "name": "` + marbleName + `", "color": "` + color + `", "size": ` + strconv.Itoa(size) + `, "owner": "` + owner + `"}`
-	//marbleJSONasBytes := []byte(str)
+	//fashionJSONasString := `{"docType":"jean",  "name": "` + clothName + `", "color": "` + color + `", "size": ` + strconv.Itoa(size) + `, "owner": "` + owner + `"}`
+	//fashionJSONasBytes := []byte(str)
 
-	// === Save marble to state ===
+	// === Save asset to state ===
 	err = stub.PutState(clothName, clothJSONasBytes)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
 
-	//  ==== Index the marble to enable color-based range queries, e.g. return all blue marbles ====
+	//  ==== Index the cloth to enable color-based range queries, e.g. return all blue marbles ====
 	//  An 'index' is a normal key/value entry in state.
 	//  The key is a composite key, with the elements that you want to range query on listed first.
 	//  In our case, the composite key is based on indexName~color~name.
@@ -173,11 +149,30 @@ func (fashion *fashionChaincode) initcloth(stub shim.ChaincodeStubInterface, arg
 	stub.PutState(colorNameIndexKey, value)
 
 	// ==== Marble saved and indexed. Return success ====
-	fmt.Println("- end init cloth the data added is: ")
+	fmt.Println("- end init cloth, the data added to the chaincode state is: ")
 	fmt.Println(cloth)
 	return shim.Success(nil)
 }
 
+//for testing token added to the chaincode state, retrieved through the get function -- CLI ->'{"Args":["get"]}'
+func get(stub shim.ChaincodeStubInterface) peer.Response {
+	var token string
+	var val []byte
+	var err error
+
+	if val, err = stub.GetState("token"); err != nil {
+		fmt.Println("failed to get the token")
+		return shim.Error("get failed!")
+	}
+	if val == nil {
+		token = "-1"
+	} else {
+		token = "token =" + string(val)
+	}
+
+	return shim.Success([]byte(token))
+
+}
 func main() {
 	fmt.Println("Started Chaincode")
 
