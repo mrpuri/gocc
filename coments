@@ -46,3 +46,9 @@
 	// } else if function == "getMarblesByRange" { //get marbles based on range query
 	// 	return t.getMarblesByRange(stub, args)
 	// }
+
+
+//ChaincodeName to create an instance of logger
+const ChaincodeName = "fashion"
+
+var logger = shim.NewLogger(ChaincodeName)

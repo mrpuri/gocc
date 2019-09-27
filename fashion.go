@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	controller "fashion/controller"
+	"fashion/model"
 	"fmt"
 	"strconv"
 	"strings"
@@ -10,31 +12,21 @@ import (
 	"github.com/hyperledger/fabric/protos/peer"
 )
 
-//ChaincodeName to create an instance of logger
-const ChaincodeName = "fashion"
-
-var logger = shim.NewLogger(ChaincodeName)
-
-//represents the chaincode object referenced throughout, reciever for chaincode shim functions
-type fashionChaincode struct {
+type FashionChaincode struct {
 }
 
-type cloth struct {
-	ObjectType string `json:"docType"` //docType is used to distinguish the various types of objects in state database
-	Name       string `json:"type"`    //the fieldtags are needed to keep case from bouncing around
-	Color      string `json:"color"`
-	Size       int    `json:"size"`
-	Owner      string `json:"owner"`
-}
+//FashionChaincode represents the chaincode object referenced throughout, reciever for chaincode shim functions
 
-func (fashion *fashionChaincode) Init(stub shim.ChaincodeStubInterface) peer.Response {
+//Init funnction runs at the chaincode initialisation
+func (fashion *FashionChaincode) Init(stub shim.ChaincodeStubInterface) peer.Response {
 	fmt.Println("init executed")
-	logger.Debug("Init executed for log")
+	//logger.Debug("Init executed for log")
 
 	return shim.Success(nil)
 }
 
-func (fashion *fashionChaincode) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
+//Invoke function runs on query and invoke
+func (fashion *FashionChaincode) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 
 	fmt.Println("invoke executed")
 	stub.PutState("token", []byte("2000"))
@@ -47,9 +39,10 @@ func (fashion *fashionChaincode) Invoke(stub shim.ChaincodeStubInterface) peer.R
 
 	// Handle different functions
 	if function == "initcloth" { //create a new clothing asset
-		return fashion.initcloth(stub, args)
+
+		return fashion.Initcloth(stub, args)
 	} else if function == "get" {
-		return get(stub)
+		return controller.Get(stub)
 	}
 
 	fmt.Println("invoke did not find func: " + function) //error
@@ -58,28 +51,15 @@ func (fashion *fashionChaincode) Invoke(stub shim.ChaincodeStubInterface) peer.R
 }
 
 // ============================================================
-// initcloth - create a new clothing asset, stores into chaincode state
+// Initcloth - create a new clothing asset, stores into chaincode state
 // ============================================================
-func (fashion *fashionChaincode) initcloth(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+func (fashion *FashionChaincode) Initcloth(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	var err error
 
 	//   0       1       2     3
 	// "shirt", "blue", "40", "bob"
 
-	//testing get and set functions for state data
-	valuet, err := stub.GetState("token")
-	if err != nil {
-		return shim.Error(err.Error())
-	}
-	intval, err := strconv.Atoi(string(valuet))
-	if err != nil {
-		return shim.Success([]byte("false"))
-	}
-	intval += 10
 
-	stub.PutState("token", []byte(strconv.Itoa(intval)))
-
-	//testing ends here
 
 	if len(args) != 4 {
 		return shim.Error("Incorrect number of arguments. Expecting 4")
@@ -117,8 +97,8 @@ func (fashion *fashionChaincode) initcloth(stub shim.ChaincodeStubInterface, arg
 	}
 
 	// ==== Create cloth object and marshal to JSON ====
-	objectType := "Clothing"
-	cloth := &cloth{objectType, clothName, color, size, owner}
+	ObjectType := "clothing"
+	cloth := &model.Cloth{ObjectType, clothName, color, size, owner}
 	clothJSONasBytes, err := json.Marshal(cloth)
 	if err != nil {
 		return shim.Error(err.Error())
@@ -154,29 +134,9 @@ func (fashion *fashionChaincode) initcloth(stub shim.ChaincodeStubInterface, arg
 	return shim.Success(nil)
 }
 
-//for testing token added to the chaincode state, retrieved through the get function -- CLI ->'{"Args":["get"]}'
-func get(stub shim.ChaincodeStubInterface) peer.Response {
-	var token string
-	var val []byte
-	var err error
-
-	if val, err = stub.GetState("token"); err != nil {
-		fmt.Println("failed to get the token")
-		return shim.Error("get failed!")
-	}
-	if val == nil {
-		token = "-1"
-	} else {
-		token = "token =" + string(val)
-	}
-
-	return shim.Success([]byte(token))
-
-}
 func main() {
 	fmt.Println("Started Chaincode")
-
-	err := shim.Start(new(fashionChaincode))
+	err := shim.Start(new(FashionChaincode))
 	if err != nil {
 		fmt.Printf("Error starting chaincode : %v", err)
 	}
